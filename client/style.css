@@ -1,0 +1,339 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    overflow: hidden;
+    position: relative;
+}
+
+.header {
+    background: #2c3e50;
+    color: white;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.header h1 {
+    font-size: 1.8rem;
+    margin-bottom: 10px;
+}
+
+.user-info {
+    text-align: right;
+}
+
+#userList {
+    margin-top: 5px;
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.toolbar {
+    background: #34495e;
+    padding: 15px;
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.tool-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.tool, #undoBtn, #redoBtn, #clearBtn {
+    background: #ecf0f1;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.tool.active {
+    background: #3498db;
+    color: white;
+}
+
+.tool:hover:not(:disabled), 
+#undoBtn:hover:not(:disabled), 
+#redoBtn:hover:not(:disabled),
+#clearBtn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+#undoBtn:not(:disabled):hover, 
+#redoBtn:not(:disabled):hover {
+    background: #3498db;
+    color: white;
+}
+
+#clearBtn:not(:disabled):hover {
+    background: #e74c3c;
+    color: white;
+}
+
+.tool:disabled, #undoBtn:disabled, #redoBtn:disabled, #clearBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.tool:disabled:hover, #undoBtn:disabled:hover, #redoBtn:disabled:hover, #clearBtn:disabled:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+#colorPicker {
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+#brushSize {
+    width: 100px;
+    cursor: pointer;
+}
+
+#brushSizeValue {
+    color: white;
+    font-size: 14px;
+    min-width: 40px;
+}
+
+.canvas-container {
+    position: relative;
+    width: 100%;
+    height: 600px;
+    background: #f8f9fa;
+    border: 1px solid #ddd;
+}
+
+#drawingCanvas, #cursorCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    cursor: crosshair;
+}
+
+#cursorCanvas {
+    pointer-events: none;
+}
+
+#cursorsContainer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.user-cursor {
+    position: absolute;
+    transition: all 0.1s ease;
+    pointer-events: none;
+}
+
+.user-cursor::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: -5px;
+    right: -5px;
+    bottom: -5px;
+    border: 2px solid currentColor;
+    border-radius: 50%;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.2); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+.status-bar {
+    background: #ecf0f1;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    color: #7f8c8d;
+}
+
+.connected {
+    color: #27ae60;
+    font-weight: bold;
+}
+
+.disconnected {
+    color: #e74c3c;
+    font-weight: bold;
+}
+
+.debug-panel {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 10px;
+    border-radius: 5px;
+    z-index: 1000;
+}
+
+#debugBtn {
+    background: #e74c3c;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+#debugInfo {
+    margin-top: 10px;
+    font-size: 12px;
+}
+
+#debugInfo div {
+    margin: 5px 0;
+}
+
+#testUndo, #testRedo {
+    background: #3498db;
+    color: white;
+    border: none;
+    padding: 3px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 10px;
+    margin: 2px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+    
+    .header {
+        flex-direction: column;
+        text-align: center;
+        gap: 10px;
+    }
+    
+    .header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .toolbar {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .tool-group {
+        justify-content: center;
+        width: 100%;
+    }
+    
+    .canvas-container {
+        height: 400px;
+    }
+    
+    .status-bar {
+        flex-direction: column;
+        gap: 5px;
+        text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .tool, #undoBtn, #redoBtn, #clearBtn {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+    
+    .canvas-container {
+        height: 300px;
+    }
+    
+    .header h1 {
+        font-size: 1.3rem;
+    }
+}
+
+/* Loading state */
+.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+/* Tooltips */
+.tool:hover::after,
+#undoBtn:hover::after,
+#redoBtn:hover::after,
+#clearBtn:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 1000;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}

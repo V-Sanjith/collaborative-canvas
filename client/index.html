@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Multi-User Drawing Canvas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            max-width: 1200px;
+            width: 100%;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(to right, #2c3e50, #4a6491);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: flex;
+            flex-wrap: wrap;
+            padding: 20px;
+            gap: 20px;
+        }
+        
+        .canvas-container {
+            flex: 1;
+            min-width: 300px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        
+        .canvas-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .canvas-title {
+            font-size: 1.5rem;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        
+        .tools {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .tool-btn {
+            padding: 10px 15px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+            min-width: 80px;
+        }
+        
+        .tool-btn:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+        
+        .tool-btn:active {
+            transform: translateY(0);
+        }
+        
+        .tool-btn:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .tool-btn:disabled:hover {
+            background-color: #95a5a6;
+            transform: none;
+        }
+        
+        .tool-btn.clear {
+            background-color: #e74c3c;
+        }
+        
+        .tool-btn.clear:hover {
+            background-color: #c0392b;
+        }
+        
+        .tool-btn.reset {
+            background-color: #f39c12;
+        }
+        
+        .tool-btn.reset:hover {
+            background-color: #d35400;
+        }
+        
+        .tool-btn.new-session {
+            background-color: #9b59b6;
+        }
+        
+        .tool-btn.new-session:hover {
+            background-color: #8e44ad;
+        }
+        
+        .color-picker {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .color-option {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: transform 0.2s;
+        }
+        
+        .color-option:hover {
+            transform: scale(1.2);
+        }
+        
+        .color-option.active {
+            border-color: #2c3e50;
+            transform: scale(1.2);
+        }
+        
+        .brush-size {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .brush-size input {
+            flex: 1;
+        }
+        
+        .canvas-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+        
+        canvas {
+            display: block;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            cursor: crosshair;
+            width: 100%;
+            height: 400px;
+        }
+        
+        .user-cursor {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10;
+            transform: translate(-50%, -50%);
+            border: 2px solid white;
+            box-shadow: 0 0 3px rgba(0,0,0,0.5);
+            transition: all 0.1s ease;
+        }
+        
+        .user-cursor-label {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 10;
+            transform: translate(10px, -25px);
+            font-weight: 500;
+        }
+        
+        .sidebar {
+            flex: 0 0 300px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .panel {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .panel-title {
+            font-size: 1.3rem;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #dee2e6;
+            font-weight: 600;
+        }
+        
+        .history-list {
+            list-style-type: none;
+            max-height: 150px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+        
+        .history-list li {
+            padding: 8px 10px;
+            background-color: white;
+            margin-bottom: 5px;
+            border-radius: 5px;
+            border-left: 4px solid #3498db;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .history-list li.undo {
+            border-left-color: #e74c3c;
+        }
+        
+        .history-list li.redo {
+            border-left-color: #2ecc71;
+        }
+        
+        .history-list li.clear {
+            border-left-color: #f39c12;
+        }
+        
+        .history-status {
+            text-align: center;
+            font-weight: 500;
+            color: #2c3e50;
+            padding: 10px;
+            background-color: white;
+            border-radius: 5px;
+        }
+        
+        .user-management {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .user-input {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .user-input input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 5px;
+        }
+        
+        .user-input button {
+            padding: 10px 15px;
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+        
+        .user-input button:hover {
+            background-color: #27ae60;
+        }
+        
+        .user-list {
+            list-style-type: none;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .user-list li {
+            padding: 10px;
+            background-color: white;
+            margin-bottom: 8px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+        
+        .user-list li .user-name {
+            font-weight: 500;
+        }
+        
+        .user-list li .user-actions button {
+            background: none;
+            border: none;
+            color: #e74c3c;
+            cursor: pointer;
+            font-size: 1.1rem;
+        }
+        
+        .instructions {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        
+        .sync-status {
+            margin-top: 10px;
+            padding: 8px;
+            border-radius: 5px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        
+        .sync-status.synced {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .sync-status.syncing {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 15px;
+            background-color: #2c3e50;
+            color: white;
+            margin-top: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                flex: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Real-Time Multi-User Drawing Canvas</h1>
+            <p class="subtitle">Collaborative drawing with real-time synchronization</p>
+        </header>
+        
+        <div class="main-content">
+            <div class="canvas-container">
+                <div class="canvas-header">
+                    <div class="canvas-title">Drawing Canvas</div>
+                    <div class="history-status">History: 0/0</div>
+                </div>
+                
+                <div class="tools">
+                    <button class="tool-btn undo">Undo</button>
+                    <button class="tool-btn redo">Redo</button>
+                    <button class="tool-btn clear">Clear Canvas</button>
+                    <button class="tool-btn reset">Reset Canvas</button>
+                    <button class="tool-btn new-session">New Session</button>
+                </div>
+                
+                <div class="color-picker">
+                    <span>Colors:</span>
+                    <div class="color-option active" style="background-color: #000000;" data-color="#000000"></div>
+                    <div class="color-option" style="background-color: #e74c3c;" data-color="#e74c3c"></div>
+                    <div class="color-option" style="background-color: #3498db;" data-color="#3498db"></div>
+                    <div class="color-option" style="background-color: #2ecc71;" data-color="#2ecc71"></div>
+                    <div class="color-option" style="background-color: #f39c12;" data-color="#f39c12"></div>
+                    <div class="color-option" style="background-color: #9b59b6;" data-color="#9b59b6"></div>
+                </div>
+                
+                <div class="brush-size">
+                    <span>Brush Size:</span>
+                    <input type="range" id="brushSize" min="1" max="20" value="5">
+                    <span id="brushSizeValue">5px</span>
+                </div>
+                
+                <div class="canvas-wrapper">
+                    <canvas id="drawingCanvas" width="800" height="400"></canvas>
+                    <!-- User cursors will be dynamically added here -->
+                </div>
+                
+                <div class="sync-status" id="syncStatus">Ready to sync</div>
+            </div>
+            
+            <div class="sidebar">
+                <div class="panel">
+                    <div class="panel-title">Action History</div>
+                    <ul class="history-list">
+                        <!-- History items will be added here dynamically -->
+                    </ul>
+                    <div class="history-status">Actions: <span id="actionCount">0</span></div>
+                    <div class="instructions">
+                        Click on canvas to draw. Use Undo/Redo to navigate through your drawing history.
+                    </div>
+                </div>
+                
+                <div class="panel">
+                    <div class="panel-title">Active Users (<span id="userCount">0</span>)</div>
+                    <div class="user-management">
+                        <div class="user-input">
+                            <input type="text" id="usernameInput" placeholder="Enter your name">
+                            <button id="addUserBtn">Join</button>
+                        </div>
+                        <ul class="user-list">
+                            <!-- User list will be added here dynamically -->
+                        </ul>
+                        <div class="instructions">
+                            Add users to collaborate. "New Session" clears canvas and users. "Reset Canvas" keeps users.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Real-Time Drawing Canvas App &copy; 2023 | All actions sync in real-time</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Canvas setup
+            const canvas = document.getElementById('drawingCanvas');
+            const ctx = canvas.getContext('2d');
+            const undoBtn = document.querySelector('.undo');
+            const redoBtn = document.querySelector('.redo');
+            const clearBtn = document.querySelector('.clear');
+            const resetBtn = document.querySelector('.reset');
+            const newSessionBtn = document.querySelector('.new-session');
+            const colorOptions = document.querySelectorAll('.color-option');
+            const brushSizeSlider = document.getElementById('brushSize');
+            const brushSizeValue = document.getElementById('brushSizeValue');
+            const historyList = document.querySelector('.history-list');
+            const historyStatus = document.querySelector('.history-status');
+            const actionCount = document.getElementById('actionCount');
+            const usernameInput = document.getElementById('usernameInput');
+            const addUserBtn = document.getElementById('addUserBtn');
+            const userList = document.querySelector('.user-list');
+            const userCount = document.getElementById('userCount');
+            const syncStatus = document.getElementById('syncStatus');
+            const canvasWrapper = document.querySelector('.canvas-wrapper');
+            
+            // State variables
+            let isDrawing = false;
+            let lastX = 0;
+            let lastY = 0;
+            let currentColor = '#000000';
+            let currentBrushSize = 5;
+            let history = [];
+            let historyStep = -1;
+            let users = [];
+            let actionCounter = 0;
+            let currentUser = null;
+            let isSyncing = false;
+            let lastCanvasUpdate = 0;
+            let userCursors = {};
+            let lastUserActivity = {};
+            
+            // Initialize canvas
+            function initCanvas() {
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.lineJoin = 'round';
+                ctx.lineCap = 'round';
+                updateHistoryStatus();
+                updateActionCount();
+                
+                // Load existing canvas data from shared storage
+                syncCanvasFromStorage();
+            }
+            
+            // Real-time synchronization functions
+            function saveCanvasData() {
+                if (isSyncing) return;
+                
+                try {
+                    const dataURL = canvas.toDataURL();
+                    localStorage.setItem('canvasData', dataURL);
+                    localStorage.setItem('canvasLastUpdate', Date.now().toString());
+                    localStorage.setItem('canvasUser', currentUser ? currentUser.name : 'anonymous');
+                    
+                    updateSyncStatus('Changes saved', 'synced');
+                } catch (e) {
+                    console.error('Failed to save canvas data:', e);
+                    updateSyncStatus('Failed to save', 'syncing');
+                }
+            }
+            
+            function syncCanvasFromStorage() {
+                if (isSyncing) return;
+                
+                try {
+                    const dataURL = localStorage.getItem('canvasData');
+                    const lastUpdate = localStorage.getItem('canvasLastUpdate');
+                    
+                    if (dataURL && lastUpdate && parseInt(lastUpdate) > lastCanvasUpdate) {
+                        isSyncing = true;
+                        updateSyncStatus('Syncing...', 'syncing');
+                        
+                        const img = new Image();
+                        img.onload = function() {
+                            ctx.clearRect(0, 0, canvas.width, canvas.height);
+                            ctx.drawImage(img, 0, 0);
+                            lastCanvasUpdate = parseInt(lastUpdate);
+                            isSyncing = false;
+                            
+                            // Update local history to match the synced state
+                            // Only update if this is not our own action (prevent undo/redo override)
+                            const currentUserAction = localStorage.getItem('canvasUser');
+                            if (currentUser && currentUserAction !== currentUser.name) {
+                                if (history.length === 0 || history[history.length - 1] !== dataURL) {
+                                    history = [dataURL];
+                                    historyStep = 0;
+                                    updateHistoryStatus();
+                                }
+                            }
+                            
+                            updateSyncStatus('Synced with other users', 'synced');
+                        };
+                        img.src = dataURL;
+                    }
+                } catch (e) {
+                    console.error('Failed to sync canvas:', e);
+                    isSyncing = false;
+                    updateSyncStatus('Sync failed', 'syncing');
+                }
+            }
+            
+            function updateSyncStatus(message, type) {
+                syncStatus.textContent = message;
+                syncStatus.className = 'sync-status';
+                if (type) {
+                    syncStatus.classList.add(type);
+                }
+                
+                // Clear status after 2 seconds
+                setTimeout(() => {
+                    if (syncStatus.textContent === message) {
+                        syncStatus.textContent = 'Ready to sync';
+                        syncStatus.className = 'sync-status';
+                    }
+                }, 2000);
+            }
+            
+            // User synchronization functions
+            function saveUsersToStorage() {
+                try {
+                    localStorage.setItem('canvasUsers', JSON.stringify(users));
+                    localStorage.setItem('usersLastUpdate', Date.now().toString());
+                } catch (e) {
+                    console.error('Failed to save users:', e);
+                }
+            }
+            
+            function syncUsersFromStorage() {
+                try {
+                    const usersData = localStorage.getItem('canvasUsers');
+                    const lastUpdate = localStorage.getItem('usersLastUpdate');
+                    
+                    if (usersData) {
+                        const storedUsers = JSON.parse(usersData);
+                        
+                        // Merge users, avoiding duplicates
+                        storedUsers.forEach(user => {
+                            if (!users.find(u => u.id === user.id)) {
+                                users.push(user);
+                            }
+                        });
+                        
+                        updateUserList();
+                    }
+                } catch (e) {
+                    console.error('Failed to sync users:', e);
+                }
+            }
+            
+            // User cursor functions
+            function updateUserCursor(userId, x, y) {
+                if (!userCursors[userId]) {
+                    createUserCursor(userId);
+                }
+                
+                const cursor = userCursors[userId].cursor;
+                const label = userCursors[userId].label;
+                
+                if (cursor && label) {
+                    cursor.style.left = `${x}px`;
+                    cursor.style.top = `${y}px`;
+                    cursor.style.display = 'block';
+                    
+                    label.style.left = `${x}px`;
+                    label.style.top = `${y}px`;
+                    label.style.display = 'block';
+                }
+                
+                // Update last activity time
+                lastUserActivity[userId] = Date.now();
+                
+                // Hide cursor after 3 seconds of inactivity
+                setTimeout(() => {
+                    if (Date.now() - lastUserActivity[userId] > 3000) {
+                        if (userCursors[userId]) {
+                            userCursors[userId].cursor.style.display = 'none';
+                            userCursors[userId].label.style.display = 'none';
+                        }
+                    }
+                }, 3000);
+            }
+            
+            function createUserCursor(userId) {
+                const user = users.find(u => u.id === userId);
+                if (!user) return;
+                
+                // Remove existing cursor if any
+                if (userCursors[userId]) {
+                    userCursors[userId].cursor.remove();
+                    userCursors[userId].label.remove();
+                }
+                
+                // Create cursor
+                const cursor = document.createElement('div');
+                cursor.className = 'user-cursor';
+                cursor.style.backgroundColor = user.color;
+                cursor.style.display = 'none';
+                
+                // Create label
+                const label = document.createElement('div');
+                label.className = 'user-cursor-label';
+                label.textContent = user.name;
+                label.style.display = 'none';
+                
+                canvasWrapper.appendChild(cursor);
+                canvasWrapper.appendChild(label);
+                
+                userCursors[userId] = { cursor, label };
+            }
+            
+            function removeUserCursor(userId) {
+                if (userCursors[userId]) {
+                    userCursors[userId].cursor.remove();
+                    userCursors[userId].label.remove();
+                    delete userCursors[userId];
+                }
+                delete lastUserActivity[userId];
+            }
+            
+            function updateAllUserCursors() {
+                try {
+                    const cursorData = localStorage.getItem('userCursors');
+                    if (cursorData) {
+                        const cursors = JSON.parse(cursorData);
+                        const now = Date.now();
+                        
+                        // Remove old cursors (older than 5 seconds)
+                        Object.keys(cursors).forEach(userId => {
+                            if (now - cursors[userId].timestamp > 5000) {
+                                removeUserCursor(userId);
+                            } else if (userId !== (currentUser ? currentUser.id : '')) {
+                                updateUserCursor(userId, cursors[userId].x, cursors[userId].y);
+                            }
+                        });
+                    }
+                } catch (e) {
+                    console.error('Failed to update user cursors:', e);
+                }
+            }
+            
+            function saveUserCursor(x, y) {
+                if (!currentUser) return;
+                
+                try {
+                    const cursorData = JSON.parse(localStorage.getItem('userCursors') || '{}');
+                    cursorData[currentUser.id] = {
+                        x: x,
+                        y: y,
+                        timestamp: Date.now(),
+                        user: currentUser.name,
+                        color: currentUser.color
+                    };
+                    
+                    localStorage.setItem('userCursors', JSON.stringify(cursorData));
+                } catch (e) {
+                    console.error('Failed to save user cursor:', e);
+                }
+            }
+            
+            // Drawing functions
+            function startDrawing(e) {
+                if (!currentUser) {
+                    alert('Please join the canvas first by entering your name');
+                    usernameInput.focus();
+                    return;
+                }
+                
+                isDrawing = true;
+                [lastX, lastY] = getMousePos(e);
+                
+                // Save cursor position
+                saveUserCursor(lastX, lastY);
+            }
+            
+            function draw(e) {
+                if (!isDrawing || !currentUser || isSyncing) return;
+                
+                const [x, y] = getMousePos(e);
+                
+                ctx.beginPath();
+                ctx.moveTo(lastX, lastY);
+                ctx.lineTo(x, y);
+                ctx.strokeStyle = currentColor;
+                ctx.lineWidth = currentBrushSize;
+                ctx.stroke();
+                
+                [lastX, lastY] = [x, y];
+                
+                // Update cursor position while drawing
+                saveUserCursor(x, y);
+            }
+            
+            function stopDrawing() {
+                if (isDrawing) {
+                    isDrawing = false;
+                    saveToHistory();
+                    saveCanvasData(); // Sync with other users
+                }
+            }
+            
+            function getMousePos(e) {
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
+                
+                let x, y;
+                
+                if (e.type.includes('touch')) {
+                    x = (e.touches[0].clientX - rect.left) * scaleX;
+                    y = (e.touches[0].clientY - rect.top) * scaleY;
+                } else {
+                    x = (e.clientX - rect.left) * scaleX;
+                    y = (e.clientY - rect.top) * scaleY;
+                }
+                
+                return [x, y];
+            }
+            
+            // Track mouse movement for cursor
+            canvas.addEventListener('mousemove', (e) => {
+                if (!currentUser) return;
+                
+                const [x, y] = getMousePos(e);
+                saveUserCursor(x, y);
+                
+                // Update current user's cursor
+                updateUserCursor(currentUser.id, x, y);
+            });
+            
+            canvas.addEventListener('mouseleave', () => {
+                if (currentUser) {
+                    // Hide cursor when leaving canvas
+                    if (userCursors[currentUser.id]) {
+                        userCursors[currentUser.id].cursor.style.display = 'none';
+                        userCursors[currentUser.id].label.style.display = 'none';
+                    }
+                }
+            });
+            
+            // History functions - FIXED: Prevent undo/redo from being overridden by sync
+            function saveToHistory() {
+                // Remove any future steps if we're not at the latest
+                if (historyStep < history.length - 1) {
+                    history = history.slice(0, historyStep + 1);
+                }
+                
+                history.push(canvas.toDataURL());
+                historyStep++;
+                updateHistoryStatus();
+                addHistoryItem(`${currentUser.name} drew`, 'draw');
+                updateActionCount();
+            }
+            
+            function undo() {
+                if (historyStep > 0) {
+                    historyStep--;
+                    restoreFromHistory();
+                    updateHistoryStatus();
+                    addHistoryItem(`${currentUser.name} undid`, 'undo');
+                    updateActionCount();
+                    
+                    // Save to storage but mark as undo action to prevent sync override
+                    setTimeout(() => {
+                        saveCanvasData();
+                        localStorage.setItem('lastAction', 'undo');
+                    }, 100);
+                }
+            }
+            
+            function redo() {
+                if (historyStep < history.length - 1) {
+                    historyStep++;
+                    restoreFromHistory();
+                    updateHistoryStatus();
+                    addHistoryItem(`${currentUser.name} redid`, 'redo');
+                    updateActionCount();
+                    
+                    // Save to storage but mark as redo action to prevent sync override
+                    setTimeout(() => {
+                        saveCanvasData();
+                        localStorage.setItem('lastAction', 'redo');
+                    }, 100);
+                }
+            }
+            
+            function restoreFromHistory() {
+                if (historyStep >= 0 && historyStep < history.length) {
+                    const img = new Image();
+                    img.onload = function() {
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        ctx.drawImage(img, 0, 0);
+                    };
+                    img.src = history[historyStep];
+                }
+            }
+            
+            function clearCanvas() {
+                if (!currentUser) return;
+                
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                saveToHistory();
+                saveCanvasData();
+                addHistoryItem(`${currentUser.name} cleared canvas`, 'clear');
+                updateActionCount();
+            }
+            
+            function resetCanvas() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                history = [];
+                historyStep = -1;
+                saveToHistory();
+                saveCanvasData();
+                updateHistoryStatus();
+                historyList.innerHTML = '';
+                addHistoryItem(`${currentUser.name} reset canvas`, 'clear');
+                updateActionCount();
+            }
+            
+            function newSession() {
+                if (confirm('Start a new session? This will clear the canvas and user list for all users.')) {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    history = [];
+                    historyStep = -1;
+                    users = [];
+                    userCursors = {};
+                    lastUserActivity = {};
+                    updateHistoryStatus();
+                    historyList.innerHTML = '';
+                    userList.innerHTML = '';
+                    addHistoryItem('New session started', 'clear');
+                    updateActionCount();
+                    
+                    // Clear shared storage
+                    localStorage.removeItem('canvasData');
+                    localStorage.removeItem('canvasUsers');
+                    localStorage.removeItem('usersLastUpdate');
+                    localStorage.removeItem('userCursors');
+                    saveCanvasData();
+                    saveUsersToStorage();
+                }
+            }
+            
+            function updateHistoryStatus() {
+                historyStatus.textContent = `History: ${historyStep + 1}/${history.length}`;
+                
+                // Update undo/redo button states
+                undoBtn.disabled = historyStep <= 0;
+                redoBtn.disabled = historyStep >= history.length - 1;
+            }
+            
+            function updateActionCount() {
+                actionCounter++;
+                actionCount.textContent = actionCounter;
+            }
+            
+            function addHistoryItem(action, type = 'draw') {
+                const li = document.createElement('li');
+                li.className = type;
+                li.innerHTML = `
+                    <span>${action}</span>
+                    <span>${new Date().toLocaleTimeString()}</span>
+                `;
+                historyList.prepend(li);
+                
+                // Keep only the last 10 history items visible
+                if (historyList.children.length > 10) {
+                    historyList.removeChild(historyList.lastChild);
+                }
+            }
+            
+            // User management functions
+            function addUser() {
+                const username = usernameInput.value.trim();
+                if (!username) {
+                    alert('Please enter your name');
+                    usernameInput.focus();
+                    return;
+                }
+                
+                const userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                currentUser = {
+                    id: userId,
+                    name: username,
+                    color: generateRandomColor(),
+                    joined: new Date().toISOString()
+                };
+                
+                // Add to users list
+                if (!users.find(u => u.id === userId)) {
+                    users.push(currentUser);
+                    updateUserList();
+                    saveUsersToStorage();
+                }
+                
+                usernameInput.value = '';
+                addHistoryItem(`${username} joined the canvas`, 'draw');
+                updateActionCount();
+                
+                updateSyncStatus(`${username} joined`, 'synced');
+            }
+            
+            function removeUser(userId) {
+                const user = users.find(u => u.id === userId);
+                if (user) {
+                    users = users.filter(u => u.id !== userId);
+                    removeUserCursor(userId);
+                    updateUserList();
+                    saveUsersToStorage();
+                    
+                    if (user.id === currentUser.id) {
+                        currentUser = null;
+                        addHistoryItem(`${user.name} left the canvas`, 'draw');
+                    } else {
+                        addHistoryItem(`${user.name} was removed`, 'draw');
+                    }
+                    updateActionCount();
+                }
+            }
+            
+            function updateUserList() {
+                userList.innerHTML = '';
+                userCount.textContent = users.length;
+                
+                if (users.length === 0) {
+                    const li = document.createElement('li');
+                    li.innerHTML = '<span style="color: #6c757d; text-align: center; width: 100%;">No users yet</span>';
+                    userList.appendChild(li);
+                    return;
+                }
+                
+                users.forEach(user => {
+                    const li = document.createElement('li');
+                    const isCurrentUser = currentUser && user.id === currentUser.id;
+                    li.innerHTML = `
+                        <span class="user-name" style="color: ${user.color}; font-weight: ${isCurrentUser ? 'bold' : 'normal'}">
+                            ${user.name} ${isCurrentUser ? '(You)' : ''}
+                        </span>
+                        <span class="user-actions">
+                            <button class="remove-user" data-userid="${user.id}">×</button>
+                        </span>
+                    `;
+                    userList.appendChild(li);
+                });
+                
+                // Add event listeners to remove buttons
+                document.querySelectorAll('.remove-user').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const userId = this.getAttribute('data-userid');
+                        removeUser(userId);
+                    });
+                });
+            }
+            
+            function generateRandomColor() {
+                const colors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c', '#34495e'];
+                return colors[Math.floor(Math.random() * colors.length)];
+            }
+            
+            // Event listeners for storage changes (real-time sync)
+            window.addEventListener('storage', function(e) {
+                if (e.key === 'canvasData') {
+                    // Don't sync if we just performed an undo/redo action
+                    const lastAction = localStorage.getItem('lastAction');
+                    if (lastAction !== 'undo' && lastAction !== 'redo') {
+                        syncCanvasFromStorage();
+                    }
+                } else if (e.key === 'canvasUsers') {
+                    syncUsersFromStorage();
+                } else if (e.key === 'userCursors') {
+                    updateAllUserCursors();
+                }
+            });
+            
+            // Periodic sync (fallback for browsers that don't fire storage events properly)
+            setInterval(() => {
+                syncCanvasFromStorage();
+                syncUsersFromStorage();
+                updateAllUserCursors();
+            }, 1000);
+            
+            // Event listeners
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseout', stopDrawing);
+            
+            // Touch support
+            canvas.addEventListener('touchstart', startDrawing);
+            canvas.addEventListener('touchmove', draw);
+            canvas.addEventListener('touchend', stopDrawing);
+            
+            undoBtn.addEventListener('click', undo);
+            redoBtn.addEventListener('click', redo);
+            clearBtn.addEventListener('click', clearCanvas);
+            resetBtn.addEventListener('click', resetCanvas);
+            newSessionBtn.addEventListener('click', newSession);
+            
+            colorOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    colorOptions.forEach(opt => opt.classList.remove('active'));
+                    this.classList.add('active');
+                    currentColor = this.getAttribute('data-color');
+                });
+            });
+            
+            brushSizeSlider.addEventListener('input', function() {
+                currentBrushSize = this.value;
+                brushSizeValue.textContent = `${this.value}px`;
+            });
+            
+            addUserBtn.addEventListener('click', addUser);
+            usernameInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    addUser();
+                }
+            });
+            
+            // Initialize the application
+            initCanvas();
+            syncUsersFromStorage();
+            
+            // Auto-join with a default name for demo
+            setTimeout(() => {
+                if (!currentUser && users.length === 0) {
+                    usernameInput.value = 'User' + Math.floor(Math.random() * 1000);
+                    addUser();
+                }
+            }, 500);
+        });
+    </script>
+</body>
+</html>
