@@ -20,6 +20,13 @@ Multiple users can draw simultaneously on the same shared canvas, with live curs
 - 💬 Server health and room statistics endpoints
 
 ---
+## 📊 Data Flow Diagram
+
+This diagram illustrates how drawing data flows through the system — from user input on the canvas, through WebSocket communication, to the server, and finally to other connected clients.
+
+Data Flow Diagram ![WhatsApp Image 2025-11-08 at 15 13 05_516c582b](https://github.com/user-attachments/assets/5408c579-03b4-4573-86f3-46996c3158ed)
+
+
 
 ## ⚙️ Setup Instructions
 
