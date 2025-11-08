@@ -112,6 +112,8 @@ collaborative-canvas/
 │   └── drawingState.js
 │
 ├── package.json
+├── README.md
+└── ARCHITECTURE.md
 
  🚀 Future Enhancements
 - Add global Undo/Redo synchronization  
